@@ -1,17 +1,11 @@
 import * as THREE from "three";
 
-import { MapControls } from "three/addons/controls/MapControls.js";
+import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 let autorotateTimeout;
 let camera, scene, renderer, controls, model;
 let previousDistance = 0;
-let controlsPanNumber = 0;
-
-const roundNumber = (value, precision = 1) => {
-  const multiplier = Math.pow(10, precision);
-  return Math.round(value * multiplier) / multiplier;
-};
 
 const onWindowResize = () => {
   // reset camera and renderer to new aspect ratio upon resizing
@@ -135,13 +129,12 @@ const setupFloor = () => {
 };
 
 const setupControls = () => {
-  controls = new MapControls(camera, renderer.domElement);
-  controls.mouseButtons.MIDDLE = controls.mouseButtons.LEFT;
-  controls.mouseButtons.RIGHT = controls.mouseButtons.LEFT;
+  controls = new TrackballControls(camera, renderer.domElement);
 
-  controls.screenSpacePanning = true;
   controls.enableDamping = true;
   controls.dampingFactor = 0.1;
+
+  controls.rotateSpeed = 5.5;
   controls.zoomSpeed = 1.5;
 
   controls.minDistance = 1;
@@ -150,14 +143,6 @@ const setupControls = () => {
   // keep orbit only available for horizontal control
   controls.minPolarAngle = Math.PI / 2;
   controls.maxPolarAngle = Math.PI / 2;
-
-  // max & min pan + can do orbit in MapControls
-  controls.addEventListener("change", function () {
-    const minPan = new THREE.Vector3(0, -controlsPanNumber, 0);
-    const maxPan = new THREE.Vector3(0, controlsPanNumber, 0);
-
-    controls.target.clamp(minPan, maxPan);
-  });
 
   // autorotate
   controls.autoRotate = true;
@@ -180,20 +165,11 @@ const setupControls = () => {
   });
 };
 
-const setControlsPanNumber = () => {
-  const multiplier = roundNumber(controls.getDistance()) - 3;
-  const getControlsPanNumber = roundNumber(0.6 * Math.abs(multiplier));
-
-  if (controls.getDistance() < 2.8) controlsPanNumber = getControlsPanNumber;
-  else controlsPanNumber = 0;
-};
-
 // ---
 const animate = () => {
   controls.update();
 
-  previousDistance = controls.getDistance();
-  setControlsPanNumber();
+  // previousDistance = controls.getDistance();
 
   // TODO: WIP ELASTICITY
   scene.traverse(function (child) {
